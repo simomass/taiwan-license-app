@@ -96,6 +96,35 @@ To generate production builds:
   flutter build ipa --release
   ```
 
+## CI/CD & Releases
+
+This project uses GitHub Actions for automated continuous integration and delivery. 
+
+### CI Builds (Commits to `main`)
+Every push or pull request to the `main` branch triggers the **Validate and Build** workflow.
+- It validates that the Python-generated `questions.json` is correctly updated.
+- It formats, analyzes, and tests the Flutter code.
+- It builds binaries for Android, Web, Windows, Linux, and macOS.
+- Build files are available for download under the **Artifacts** section of the Actions run. These are CI snapshots, not permanent releases.
+
+### Creating a Release
+To publish a formal release, push a version tag starting with `v` (e.g., `v1.0.0`). Ensure the Git tag matches the `version:` in `pubspec.yaml`:
+```bash
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+This triggers the same builds as CI, but adds a final **Publish Release** job that creates a GitHub Release and attaches the following downloadable binaries:
+- `patente-moto-taiwan-android.apk`
+- `patente-moto-taiwan-web.zip`
+- `patente-moto-taiwan-windows.zip`
+- `patente-moto-taiwan-linux.tar.gz`
+- `patente-moto-taiwan-macos.zip`
+
+> **Note on Platform Limitations**:
+> - **Android**: The provided APK is built in release mode but is intended for direct side-loading (internal/downloadable distribution). It is not signed with a production Google Play Store keystore.
+> - **macOS/Windows**: The desktop builds may be unsigned or not notarized, requiring users to bypass security prompts (e.g., macOS Gatekeeper) to run them.
+> - **Linux**: The Linux archive requires compatible GTK/desktop libraries on the host system.
+
 ---
 
 ## Project Structure

@@ -1,0 +1,365 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: build-release-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+permissions:
+  contents: read
+
+jobs:
+  validate-data-and-flutter:
+    name: Validate Data and Flutter Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install pymupdf
+
+      - name: Validate generated JSON data
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if find assets -type f -iname "*.pdf" -print -quit | grep -q .; then
+            python scripts/extract_questions_fixed.py
+            git diff --exit-code -- assets/questions.json
+          else
+            python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("assets/questions.json")
+
+          if not path.is_file():
+              raise SystemExit(f"Required file does not exist: {path}")
+
+          with path.open("r", encoding="utf-8") as file:
+              data = json.load(file)
+
+          if not isinstance(data, (list, dict)):
+              raise SystemExit(
+                  "assets/questions.json must contain a JSON array or object"
+              )
+
+          print(f"Validated {path}")
+          PY
+          fi
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+  build-android:
+    name: Build Android APK
+    needs: validate-data-and-flutter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Package APK
+        run: mv build/app/outputs/flutter-apk/app-release.apk patente-moto-taiwan-android.apk
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: patente-moto-taiwan-android
+          path: patente-moto-taiwan-android.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  build-web:
+    name: Build Web App
+    needs: validate-data-and-flutter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Web
+        run: flutter build web --release
+
+      - name: Package Web
+        run: |
+          mv build/web patente-moto-taiwan-web
+          zip -r patente-moto-taiwan-web.zip patente-moto-taiwan-web
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: patente-moto-taiwan-web
+          path: patente-moto-taiwan-web.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  build-windows:
+    name: Build Windows App
+    if: github.event_name != 'pull_request'
+    needs: validate-data-and-flutter
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Package Windows
+        run: |
+          Rename-Item -Path build\windows\x64\runner\Release -NewName patente-moto-taiwan-windows
+          Compress-Archive -Path patente-moto-taiwan-windows -DestinationPath patente-moto-taiwan-windows.zip
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: patente-moto-taiwan-windows
+          path: patente-moto-taiwan-windows.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  build-linux:
+    name: Build Linux App
+    if: github.event_name != 'pull_request'
+    needs: validate-data-and-flutter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake git ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Linux
+        run: flutter build linux --release
+
+      - name: Package Linux
+        run: |
+          mv build/linux/x64/release/bundle patente-moto-taiwan-linux
+          tar -czvf patente-moto-taiwan-linux.tar.gz patente-moto-taiwan-linux
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: patente-moto-taiwan-linux
+          path: patente-moto-taiwan-linux.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+  build-macos:
+    name: Build macOS App
+    if: github.event_name != 'pull_request'
+    needs: validate-data-and-flutter
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
+
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS
+        run: flutter build macos --release
+
+      - name: Package macOS
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APP_PATH="$(find build/macos/Build/Products/Release \
+            -maxdepth 1 \
+            -type d \
+            -name '*.app' \
+            -print \
+            -quit)"
+
+          if [[ -z "${APP_PATH}" ]]; then
+            echo "::error::No macOS .app bundle was found"
+            exit 1
+          fi
+
+          echo "Packaging ${APP_PATH}"
+
+          ditto \
+            -c \
+            -k \
+            --sequesterRsrc \
+            --keepParent \
+            "${APP_PATH}" \
+            patente-moto-taiwan-macos.zip
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: patente-moto-taiwan-macos
+          path: patente-moto-taiwan-macos.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - build-android
+      - build-web
+      - build-windows
+      - build-linux
+      - build-macos
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Verify release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Release assets:"
+          find release-assets -maxdepth 1 -type f -printf '%f\n' | sort
+
+          expected_assets=(
+            "patente-moto-taiwan-android.apk"
+            "patente-moto-taiwan-web.zip"
+            "patente-moto-taiwan-windows.zip"
+            "patente-moto-taiwan-linux.tar.gz"
+            "patente-moto-taiwan-macos.zip"
+          )
+
+          for asset in "${expected_assets[@]}"; do
+            if [[ ! -f "release-assets/${asset}" ]]; then
+              echo "::error::Missing release asset: ${asset}"
+              exit 1
+            fi
+          done
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "Release ${GITHUB_REF_NAME} already exists; uploading assets."
+
+            gh release upload "${GITHUB_REF_NAME}" \
+              release-assets/* \
+              --repo "${GITHUB_REPOSITORY}" \
+              --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              release-assets/* \
+              --repo "${GITHUB_REPOSITORY}" \
+              --generate-notes \
+              --verify-tag \
+              --title "${GITHUB_REF_NAME}"
+          fi
