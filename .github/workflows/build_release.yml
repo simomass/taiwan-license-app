@@ -11,6 +11,9 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  FLUTTER_VERSION: "3.44.6"
+
 concurrency:
   group: build-release-${{ github.ref }}
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
@@ -72,9 +75,14 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+
+      - name: Show Flutter environment
+        run: |
+          flutter --version
+          dart --version
 
       - name: Install Flutter dependencies
         run: flutter pub get
@@ -105,9 +113,14 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+
+      - name: Show Flutter environment
+        run: |
+          flutter --version
+          dart --version
 
       - name: Install dependencies
         run: flutter pub get
@@ -137,9 +150,14 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+
+      - name: Show Flutter environment
+        run: |
+          flutter --version
+          dart --version
 
       - name: Install dependencies
         run: flutter pub get
@@ -172,9 +190,14 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+
+      - name: Show Flutter environment
+        run: |
+          flutter --version
+          dart --version
 
       - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
@@ -215,9 +238,14 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+
+      - name: Show Flutter environment
+        run: |
+          flutter --version
+          dart --version
 
       - name: Enable Linux desktop
         run: flutter config --enable-linux-desktop
@@ -253,9 +281,14 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+
+      - name: Show Flutter environment
+        run: |
+          flutter --version
+          dart --version
 
       - name: Enable macOS desktop
         run: flutter config --enable-macos-desktop
@@ -293,7 +326,7 @@ jobs:
             "${APP_PATH}" \
             patente-moto-taiwan-macos.zip
 
-      - name: Upload Artifact
+      - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: patente-moto-taiwan-macos
