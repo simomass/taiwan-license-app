@@ -44,13 +44,14 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   Future<void> _loadData() async {
     await _metricsManager.loadMetrics();
-    
-    final categoryQuestions = DataManager().getQuestionsByCategory(widget.category);
+
+    final categoryQuestions =
+        DataManager().getQuestionsByCategory(widget.category);
     _totalQuestions = categoryQuestions.length;
-    
+
     _pendingQuestions = List.from(categoryQuestions);
     _pendingQuestions.shuffle();
-    
+
     _nextQuestion();
   }
 
@@ -60,9 +61,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _answered = false;
       if (_pendingQuestions.isNotEmpty) {
         _currentQuestion = _pendingQuestions.first;
-        if (_isWebViewSupported && _webViewController != null && 
-            _currentQuestion!.videoUrl != null && _currentQuestion!.videoUrl!.isNotEmpty) {
-          _webViewController!.loadRequest(Uri.parse(_currentQuestion!.videoUrl!));
+        if (_isWebViewSupported &&
+            _webViewController != null &&
+            _currentQuestion!.videoUrl != null &&
+            _currentQuestion!.videoUrl!.isNotEmpty) {
+          _webViewController!
+              .loadRequest(Uri.parse(_currentQuestion!.videoUrl!));
         }
       } else {
         _currentQuestion = null;
@@ -80,12 +84,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   Future<void> _checkAnswer(int selectedIndex) async {
     if (_answered || _currentQuestion == null) return;
-    
+
     final isCorrect = selectedIndex == _currentQuestion!.correctIndex;
-    
+
     // Log to metrics
     await _metricsManager.recordAnswer(_currentQuestion!.id, isCorrect);
-    
+
     setState(() {
       _answered = true;
       if (isCorrect) {
@@ -132,33 +136,36 @@ class _TrainingScreenState extends State<TrainingScreen> {
                 children: [
                   Text(
                     "Risolte in questa sessione: $_solvedCount / $_totalQuestions",
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  
                   Text(
-                    _currentQuestion!.question.trim().isEmpty ? "What does this sign/image indicate?" : _currentQuestion!.question,
+                    _currentQuestion!.question.trim().isEmpty
+                        ? "What does this sign/image indicate?"
+                        : _currentQuestion!.question,
                     style: const TextStyle(fontSize: 20),
                   ),
                   const SizedBox(height: 16),
-                  
-                  if (_currentQuestion!.imagePath != null && _currentQuestion!.imagePath!.isNotEmpty)
+                  if (_currentQuestion!.imagePath != null &&
+                      _currentQuestion!.imagePath!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxHeight: 250),
                         child: Image.asset(
-                           _currentQuestion!.imagePath!,
+                          _currentQuestion!.imagePath!,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
-                            return const Text("Immagine non trovata", style: TextStyle(color: Colors.red));
+                            return const Text("Immagine non trovata",
+                                style: TextStyle(color: Colors.red));
                           },
                         ),
                       ),
                     ),
-
-                  if (_currentQuestion!.videoUrl != null && _currentQuestion!.videoUrl!.isNotEmpty)
+                  if (_currentQuestion!.videoUrl != null &&
+                      _currentQuestion!.videoUrl!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: _isWebViewSupported && _webViewController != null
@@ -167,7 +174,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey),
                               ),
-                              child: WebViewWidget(controller: _webViewController!),
+                              child: WebViewWidget(
+                                  controller: _webViewController!),
                             )
                           : Column(
                               children: [
@@ -180,12 +188,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
                                 ElevatedButton.icon(
                                   icon: const Icon(Icons.open_in_browser),
                                   label: const Text("Apri Video nel Browser"),
-                                  onPressed: () => _launchExternalVideo(_currentQuestion!.videoUrl!),
+                                  onPressed: () => _launchExternalVideo(
+                                      _currentQuestion!.videoUrl!),
                                 ),
                               ],
                             ),
                     ),
-                    
                   ...List.generate(_currentQuestion!.options.length, (index) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -196,20 +204,21 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     );
                   }),
                   const SizedBox(height: 20),
-                  
                   if (!_answered)
                     TextButton(
                       onPressed: _skipQuestion,
-                      child: const Text("Skip Question", style: TextStyle(fontSize: 18, color: Colors.grey)),
+                      child: const Text("Skip Question",
+                          style: TextStyle(fontSize: 18, color: Colors.grey)),
                     ),
-
                   if (_answered) ...[
                     Text(
                       _feedbackText,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: _feedbackText == "Corretto!" ? Colors.green : Colors.red,
+                        color: _feedbackText == "Corretto!"
+                            ? Colors.green
+                            : Colors.red,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -222,14 +231,15 @@ class _TrainingScreenState extends State<TrainingScreen> {
                       ),
                       onPressed: () {
                         if (_feedbackText == "Corretto!") {
-                          _pendingQuestions.removeAt(0); 
+                          _pendingQuestions.removeAt(0);
                         } else {
                           final current = _pendingQuestions.removeAt(0);
                           _pendingQuestions.add(current);
                         }
                         _nextQuestion();
                       },
-                      child: const Text("Prossima Domanda", style: TextStyle(fontSize: 18)),
+                      child: const Text("Prossima Domanda",
+                          style: TextStyle(fontSize: 18)),
                     ),
                   ]
                 ],

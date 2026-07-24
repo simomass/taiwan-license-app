@@ -73,35 +73,44 @@ class _MetricsScreenState extends State<MetricsScreen> {
                   child: Column(
                     children: [
                       ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
                         leading: CircleAvatar(
                           backgroundColor: Colors.blueAccent,
                           child: const Icon(Icons.school, color: Colors.white),
                         ),
                         title: const Text(
                           'Start Study Session',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 18),
                         ),
                         subtitle: Text(
                           studyIds.isNotEmpty
                               ? '${studyIds.length} question(s) ready for mastery & review'
                               : 'All missed questions currently mastered & up-to-date!',
                           style: TextStyle(
-                            color: studyIds.isNotEmpty ? Colors.blue.shade900 : Colors.grey.shade700,
+                            color: studyIds.isNotEmpty
+                                ? Colors.blue.shade900
+                                : Colors.grey.shade700,
                           ),
                         ),
                         trailing: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: studyIds.isNotEmpty ? Colors.blueAccent : Colors.grey,
+                            backgroundColor: studyIds.isNotEmpty
+                                ? Colors.blueAccent
+                                : Colors.grey,
                             foregroundColor: Colors.white,
                           ),
-                          onPressed: studyIds.isNotEmpty ? _openStudySession : null,
+                          onPressed:
+                              studyIds.isNotEmpty ? _openStudySession : null,
                           icon: const Icon(Icons.play_arrow),
                           label: const Text('Study'),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0).copyWith(top: 0),
+                        padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 8.0)
+                            .copyWith(top: 0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -110,16 +119,21 @@ class _MetricsScreenState extends State<MetricsScreen> {
                               style: TextStyle(fontWeight: FontWeight.w500),
                             ),
                             DropdownButton<int>(
-                              value: widget.metricsManager.studyMasteryThreshold,
+                              value:
+                                  widget.metricsManager.studyMasteryThreshold,
                               isDense: true,
                               underline: const SizedBox(),
-                              items: [1, 2, 3, 4, 5].map((e) => DropdownMenuItem(
-                                value: e,
-                                child: Text('$e correct answer${e > 1 ? 's' : ''}'),
-                              )).toList(),
+                              items: [1, 2, 3, 4, 5]
+                                  .map((e) => DropdownMenuItem(
+                                        value: e,
+                                        child: Text(
+                                            '$e correct answer${e > 1 ? 's' : ''}'),
+                                      ))
+                                  .toList(),
                               onChanged: (val) async {
                                 if (val != null) {
-                                  await widget.metricsManager.setStudyMasteryThreshold(val);
+                                  await widget.metricsManager
+                                      .setStudyMasteryThreshold(val);
                                   setState(() {});
                                 }
                               },
@@ -131,12 +145,16 @@ class _MetricsScreenState extends State<MetricsScreen> {
                   ),
                 ),
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Missed Questions Breakdown',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey),
                     ),
                   ),
                 ),
@@ -145,25 +163,34 @@ class _MetricsScreenState extends State<MetricsScreen> {
                     itemCount: failedIds.length,
                     itemBuilder: (context, index) {
                       final id = failedIds[index];
-                      final Question? q = allQuestions.where((q) => q.id == id).firstOrNull;
+                      final Question? q =
+                          allQuestions.where((q) => q.id == id).firstOrNull;
 
                       if (q == null) return const SizedBox.shrink();
 
-                      final incorrectCount = widget.metricsManager.getIncorrectCount(id);
-                      final correctCount = widget.metricsManager.getCorrectCount(id);
-                      final streak = widget.metricsManager.getStudyConsecutiveCorrect(id);
+                      final incorrectCount =
+                          widget.metricsManager.getIncorrectCount(id);
+                      final correctCount =
+                          widget.metricsManager.getCorrectCount(id);
+                      final streak =
+                          widget.metricsManager.getStudyConsecutiveCorrect(id);
                       final total = incorrectCount + correctCount;
-                      final rate = (incorrectCount / total * 100).toStringAsFixed(1);
+                      final rate =
+                          (incorrectCount / total * 100).toStringAsFixed(1);
 
                       return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 6.0),
                         child: ListTile(
                           title: Text(
-                            q.question.trim().isEmpty ? "What does this sign/image indicate?" : q.question,
+                            q.question.trim().isEmpty
+                                ? "What does this sign/image indicate?"
+                                : q.question,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          subtitle: Text('Incorrect: $incorrectCount / Total: $total ($rate% fail rate) • Study streak: $streak/${widget.metricsManager.studyMasteryThreshold}'),
+                          subtitle: Text(
+                              'Incorrect: $incorrectCount / Total: $total ($rate% fail rate) • Study streak: $streak/${widget.metricsManager.studyMasteryThreshold}'),
                           trailing: const Icon(Icons.arrow_forward_ios),
                           onTap: () {
                             _showQuestionDetails(context, q);
@@ -189,7 +216,11 @@ class _MetricsScreenState extends State<MetricsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(q.question.trim().isEmpty ? "What does this sign/image indicate?" : q.question, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                    q.question.trim().isEmpty
+                        ? "What does this sign/image indicate?"
+                        : q.question,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 if (q.imagePath != null && q.imagePath!.isNotEmpty)
                   Image.asset(q.imagePath!, height: 100),
@@ -200,10 +231,11 @@ class _MetricsScreenState extends State<MetricsScreen> {
                   return Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
-                      '${i+1}. ${q.options[i]}',
+                      '${i + 1}. ${q.options[i]}',
                       style: TextStyle(
                         color: isCorrect ? Colors.green : Colors.black,
-                        fontWeight: isCorrect ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isCorrect ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   );
@@ -236,7 +268,8 @@ class _MetricsScreenState extends State<MetricsScreen> {
     final buffer = StringBuffer();
     // UTF-8 BOM for Excel
     buffer.write('\uFEFF');
-    buffer.writeln('Question ID,Category,Question Text,Correct Attempts,Incorrect Attempts,Fail Rate (%)');
+    buffer.writeln(
+        'Question ID,Category,Question Text,Correct Attempts,Incorrect Attempts,Fail Rate (%)');
 
     for (var id in failedIds) {
       final q = allQuestions.where((q) => q.id == id).firstOrNull;
@@ -246,12 +279,16 @@ class _MetricsScreenState extends State<MetricsScreen> {
       final correctCount = widget.metricsManager.getCorrectCount(id);
       final total = incorrectCount + correctCount;
       final rate = (incorrectCount / total * 100).toStringAsFixed(1);
-      
-      final text = q.question.trim().isEmpty ? "What does this sign/image indicate?" : q.question;
-      final escapedText = '"${text.replaceAll('"', '""').replaceAll('\n', ' ')}"';
+
+      final text = q.question.trim().isEmpty
+          ? "What does this sign/image indicate?"
+          : q.question;
+      final escapedText =
+          '"${text.replaceAll('"', '""').replaceAll('\n', ' ')}"';
       final escapedCategory = '"${q.category.replaceAll('"', '""')}"';
 
-      buffer.writeln('${q.id},$escapedCategory,$escapedText,$correctCount,$incorrectCount,$rate');
+      buffer.writeln(
+          '${q.id},$escapedCategory,$escapedText,$correctCount,$incorrectCount,$rate');
     }
 
     try {

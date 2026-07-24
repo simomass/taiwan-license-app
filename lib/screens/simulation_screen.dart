@@ -21,11 +21,12 @@ class SimulationScreen extends StatefulWidget {
 class _SimulationScreenState extends State<SimulationScreen> {
   List<Question> _simulationQuestions = [];
   Map<int, int> _userAnswers = {}; // question index -> selected option index
-  Set<int> _skippedQuestions = {}; // question indices that user navigated away from without answering
+  Set<int> _skippedQuestions =
+      {}; // question indices that user navigated away from without answering
   int _currentIndex = 0;
   bool _isGenerating = true;
   bool _isOverviewExpanded = true;
-  
+
   Timer? _timer;
   int _secondsRemaining = 1800; // 30 minutes
 
@@ -57,14 +58,16 @@ class _SimulationScreenState extends State<SimulationScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('sim_active', true);
-      
-      final questionsJson = _simulationQuestions.map((q) => q.toJson()).toList();
+
+      final questionsJson =
+          _simulationQuestions.map((q) => q.toJson()).toList();
       await prefs.setString('sim_questions', jsonEncode(questionsJson));
-      
+
       final answersJson = _userAnswers.map((k, v) => MapEntry(k.toString(), v));
       await prefs.setString('sim_answers', jsonEncode(answersJson));
-      
-      await prefs.setString('sim_skipped', jsonEncode(_skippedQuestions.toList()));
+
+      await prefs.setString(
+          'sim_skipped', jsonEncode(_skippedQuestions.toList()));
       await prefs.setInt('sim_current_index', _currentIndex);
       await prefs.setInt('sim_seconds_remaining', _secondsRemaining);
     } catch (e) {
@@ -89,7 +92,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
   Future<void> _loadOrGenerateSimulation() async {
     final prefs = await SharedPreferences.getInstance();
     final active = prefs.getBool('sim_active') ?? false;
-    
+
     if (active) {
       try {
         final questionsStr = prefs.getString('sim_questions');
@@ -97,23 +100,25 @@ class _SimulationScreenState extends State<SimulationScreen> {
         final skippedStr = prefs.getString('sim_skipped');
         final currentIndex = prefs.getInt('sim_current_index') ?? 0;
         final secondsRemaining = prefs.getInt('sim_seconds_remaining') ?? 1800;
-        
+
         if (questionsStr != null) {
           final List<dynamic> questionsList = jsonDecode(questionsStr);
-          final questions = questionsList.map((q) => Question.fromSavedJson(q)).toList();
-          
+          final questions =
+              questionsList.map((q) => Question.fromSavedJson(q)).toList();
+
           Map<int, int> answers = {};
           if (answersStr != null) {
             final Map<String, dynamic> answersMap = jsonDecode(answersStr);
-            answers = answersMap.map((k, v) => MapEntry(int.parse(k), v as int));
+            answers =
+                answersMap.map((k, v) => MapEntry(int.parse(k), v as int));
           }
-          
+
           Set<int> skipped = {};
           if (skippedStr != null) {
             final List<dynamic> skippedList = jsonDecode(skippedStr);
             skipped = Set<int>.from(skippedList.cast<int>());
           }
-          
+
           setState(() {
             _simulationQuestions = questions;
             _userAnswers = answers;
@@ -122,7 +127,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
             _secondsRemaining = secondsRemaining;
             _isGenerating = false;
           });
-          
+
           _startTimer();
           _updateVideoForCurrentQuestion();
           return;
@@ -131,13 +136,13 @@ class _SimulationScreenState extends State<SimulationScreen> {
         debugPrint("Error loading simulation: $e");
       }
     }
-    
+
     _generateNewSimulation();
   }
 
   void _generateNewSimulation() {
     final allQs = DataManager().allQuestions;
-    
+
     // 1. Get 15 Video Questions
     final videoQs = allQs.where((q) => q.isVideoQuestion).toList();
     videoQs.shuffle();
@@ -154,11 +159,11 @@ class _SimulationScreenState extends State<SimulationScreen> {
     _currentIndex = 0;
     _userAnswers.clear();
     _skippedQuestions.clear();
-    
+
     setState(() {
       _isGenerating = false;
     });
-    
+
     _startTimer();
     _updateVideoForCurrentQuestion();
     _saveSimulationState();
@@ -171,7 +176,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
         setState(() {
           _secondsRemaining--;
         });
-        
+
         // Save state every 5 seconds to minimize disk writes
         if (_secondsRemaining % 5 == 0) {
           _saveSimulationState();
@@ -188,10 +193,10 @@ class _SimulationScreenState extends State<SimulationScreen> {
     final seconds = (_secondsRemaining % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
-  
+
   void _updateVideoForCurrentQuestion() {
     if (!_isWebViewSupported || _webViewController == null) return;
-    
+
     final q = _simulationQuestions[_currentIndex];
     final url = q.videoUrl;
     if (url != null && url.isNotEmpty) {
@@ -244,14 +249,14 @@ class _SimulationScreenState extends State<SimulationScreen> {
 
     // Record metrics and calculate score
     final metricsManager = MetricsManager();
-    
+
     int correctCount = 0;
     List<Map<String, dynamic>> wrongAnswers = [];
 
     for (int i = 0; i < _simulationQuestions.length; i++) {
       final q = _simulationQuestions[i];
       final userAnswer = _userAnswers[i] ?? -1;
-      
+
       final isCorrect = userAnswer == q.correctIndex;
       if (userAnswer != -1) {
         await metricsManager.recordAnswer(q.id, isCorrect);
@@ -293,7 +298,8 @@ class _SimulationScreenState extends State<SimulationScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Abandon Simulation?'),
-        content: const Text('Do you want to abandon the simulation? Your progress will be lost.'),
+        content: const Text(
+            'Do you want to abandon the simulation? Your progress will be lost.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -320,222 +326,244 @@ class _SimulationScreenState extends State<SimulationScreen> {
     final q = _simulationQuestions[_currentIndex];
 
     return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        final navigator = Navigator.of(context);
-        final abandon = await _showAbandonDialog();
-        if (abandon == true && mounted) {
-          await _clearSimulationState();
-          navigator.pop();
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Simulation ($_timeString)'),
-          actions: [
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: Text(
-                  '${_currentIndex + 1}/50',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          final navigator = Navigator.of(context);
+          final abandon = await _showAbandonDialog();
+          if (abandon == true && mounted) {
+            await _clearSimulationState();
+            navigator.pop();
+          }
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text('Simulation ($_timeString)'),
+            actions: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: Text(
+                    '${_currentIndex + 1}/50',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              )
+            ],
+          ),
+          body: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        q.question.trim().isEmpty
+                            ? "What does this sign/image indicate?"
+                            : q.question,
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                      const SizedBox(height: 16),
+                      if (q.imagePath != null && q.imagePath!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 250),
+                            child: Image.asset(
+                              q.imagePath!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Text("Immagine non trovata",
+                                    style: TextStyle(color: Colors.red));
+                              },
+                            ),
+                          ),
+                        ),
+                      if (q.videoUrl != null && q.videoUrl!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: _isWebViewSupported &&
+                                  _webViewController != null
+                              ? Container(
+                                  height: 250,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                  ),
+                                  child: WebViewWidget(
+                                      controller: _webViewController!),
+                                )
+                              : Column(
+                                  children: [
+                                    const Text(
+                                      "L'embedded player non è supportato su questa piattaforma.",
+                                      style: TextStyle(color: Colors.grey),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ElevatedButton.icon(
+                                      icon: const Icon(Icons.open_in_browser),
+                                      label:
+                                          const Text("Apri Video nel Browser"),
+                                      onPressed: () =>
+                                          _launchExternalVideo(q.videoUrl!),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ...List.generate(q.options.length, (index) {
+                        final isSelected = _userAnswers[_currentIndex] == index;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  isSelected ? Colors.blue.shade200 : null,
+                            ),
+                            onPressed: () => _answerQuestion(index),
+                            child: Text(
+                              q.options[index],
+                              style: TextStyle(
+                                  color: isSelected ? Colors.black : null),
+                            ),
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 30),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ElevatedButton(
+                            onPressed:
+                                _currentIndex > 0 ? _previousQuestion : null,
+                            child: const Text('Previous'),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: _nextQuestion,
+                            child: Text(_currentIndex == 49
+                                ? 'Finish Test'
+                                : 'Next / Skip'),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
                 ),
               ),
-            )
-          ],
-        ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    q.question.trim().isEmpty ? "What does this sign/image indicate?" : q.question,
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  if (q.imagePath != null && q.imagePath!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 250),
-                        child: Image.asset(
-                           q.imagePath!,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Text("Immagine non trovata", style: TextStyle(color: Colors.red));
-                          },
-                        ),
-                      ),
-                    ),
 
-                  if (q.videoUrl != null && q.videoUrl!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: _isWebViewSupported && _webViewController != null
-                          ? Container(
-                              height: 250,
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                              ),
-                              child: WebViewWidget(controller: _webViewController!),
-                            )
-                          : Column(
-                              children: [
-                                const Text(
-                                  "L'embedded player non è supportato su questa piattaforma.",
-                                  style: TextStyle(color: Colors.grey),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 8),
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.open_in_browser),
-                                  label: const Text("Apri Video nel Browser"),
-                                  onPressed: () => _launchExternalVideo(q.videoUrl!),
-                                ),
-                              ],
-                            ),
-                    ),
-                    
-                  ...List.generate(q.options.length, (index) {
-                    final isSelected = _userAnswers[_currentIndex] == index;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isSelected ? Colors.blue.shade200 : null,
-                        ),
-                        onPressed: () => _answerQuestion(index),
-                        child: Text(
-                          q.options[index],
-                          style: TextStyle(color: isSelected ? Colors.black : null),
-                        ),
-                      ),
-                    );
-                  }),
-                  
-                  const SizedBox(height: 30),
-                  
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      ElevatedButton(
-                        onPressed: _currentIndex > 0 ? _previousQuestion : null,
-                        child: const Text('Previous'),
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: _nextQuestion,
-                        child: Text(_currentIndex == 49 ? 'Finish Test' : 'Next / Skip'),
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-          ),
-          
-          // The 50-box grid
-          Container(
-            padding: const EdgeInsets.all(12.0),
-            color: Colors.grey.shade200,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // The 50-box grid
+              Container(
+                padding: const EdgeInsets.all(12.0),
+                color: Colors.grey.shade200,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Overview',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        Row(
+                          children: [
+                            const Text(
+                              'Overview',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                _isOverviewExpanded
+                                    ? Icons.keyboard_double_arrow_down
+                                    : Icons.keyboard_double_arrow_up,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () {
+                                setState(() {
+                                  _isOverviewExpanded = !_isOverviewExpanded;
+                                });
+                              },
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: Icon(
-                            _isOverviewExpanded
-                                ? Icons.keyboard_double_arrow_down
-                                : Icons.keyboard_double_arrow_up,
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () {
-                            setState(() {
-                              _isOverviewExpanded = !_isOverviewExpanded;
-                            });
-                          },
+                        Text(
+                          '${_userAnswers.length} / 50 answered',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                       ],
                     ),
-                    Text(
-                      '${_userAnswers.length} / 50 answered',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
+                    const SizedBox(height: 8),
+                    if (_isOverviewExpanded)
+                      Center(
+                        child: Wrap(
+                          spacing: 6.0,
+                          runSpacing: 6.0,
+                          alignment: WrapAlignment.center,
+                          children: List.generate(50, (index) {
+                            final isAnswered = _userAnswers.containsKey(index);
+                            final isSkipped = _skippedQuestions.contains(index);
+                            final isCurrent = index == _currentIndex;
+
+                            Color boxColor = Colors.red.shade400; // Unanswered
+                            if (isAnswered) {
+                              boxColor = Colors.yellow.shade600;
+                            } else if (isSkipped) {
+                              boxColor = Colors.grey.shade400;
+                            }
+
+                            return GestureDetector(
+                              onTap: () => _goToQuestion(index),
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: boxColor,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: isCurrent
+                                      ? Border.all(
+                                          color: Colors.black, width: 2.5)
+                                      : Border.all(
+                                          color: Colors.black12, width: 1),
+                                  boxShadow: isCurrent
+                                      ? [
+                                          BoxShadow(
+                                              color: Colors.black
+                                                  .withValues(alpha: 0.2),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2))
+                                        ]
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: (isAnswered || isSkipped)
+                                          ? Colors.black87
+                                          : Colors.white,
+                                      fontWeight: isCurrent
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                if (_isOverviewExpanded)
-                Center(
-                  child: Wrap(
-                    spacing: 6.0,
-                    runSpacing: 6.0,
-                    alignment: WrapAlignment.center,
-                    children: List.generate(50, (index) {
-                      final isAnswered = _userAnswers.containsKey(index);
-                      final isSkipped = _skippedQuestions.contains(index);
-                      final isCurrent = index == _currentIndex;
-
-                      Color boxColor = Colors.red.shade400; // Unanswered
-                      if (isAnswered) {
-                        boxColor = Colors.yellow.shade600;
-                      } else if (isSkipped) {
-                        boxColor = Colors.grey.shade400;
-                      }
-
-                      return GestureDetector(
-                        onTap: () => _goToQuestion(index),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: boxColor,
-                            borderRadius: BorderRadius.circular(4),
-                            border: isCurrent 
-                                ? Border.all(color: Colors.black, width: 2.5) 
-                                : Border.all(color: Colors.black12, width: 1),
-                            boxShadow: isCurrent ? [
-                              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))
-                            ] : null,
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${index + 1}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: (isAnswered || isSkipped) ? Colors.black87 : Colors.white,
-                                fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-              ],
-            ),
-          )
-        ],
-      ),
-    ));
+              )
+            ],
+          ),
+        ));
   }
 }

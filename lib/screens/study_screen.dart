@@ -189,8 +189,9 @@ class _StudyScreenState extends State<StudyScreen> {
       foregroundColor = Colors.black;
     }
 
-    final VoidCallback? onPressed =
-        (_hasAnswered || _isRecordingAnswer) ? null : () => _onAnswerSelected(index);
+    final VoidCallback? onPressed = (_hasAnswered || _isRecordingAnswer)
+        ? null
+        : () => _onAnswerSelected(index);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -220,16 +221,19 @@ class _StudyScreenState extends State<StudyScreen> {
     Color color;
 
     if (result.masteredNow) {
-      bannerText = "Mastered! (${_metricsManager.studyMasteryThreshold}/${_metricsManager.studyMasteryThreshold}) Scheduled for future review.";
+      bannerText =
+          "Mastered! (${_metricsManager.studyMasteryThreshold}/${_metricsManager.studyMasteryThreshold}) Scheduled for future review.";
       color = Colors.green.shade700;
     } else if (result.wasDueReview && result.isCorrect) {
       bannerText = "Review Complete! Next review scheduled.";
       color = Colors.green.shade700;
     } else if (result.isCorrect) {
-      bannerText = "Correct! (${result.studyConsecutiveCorrect}/${_metricsManager.studyMasteryThreshold})";
+      bannerText =
+          "Correct! (${result.studyConsecutiveCorrect}/${_metricsManager.studyMasteryThreshold})";
       color = Colors.green.shade700;
     } else {
-      bannerText = "Incorrect - Streak reset (0/${_metricsManager.studyMasteryThreshold})";
+      bannerText =
+          "Incorrect - Streak reset (0/${_metricsManager.studyMasteryThreshold})";
       color = Colors.red.shade700;
     }
 
@@ -309,7 +313,8 @@ class _StudyScreenState extends State<StudyScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Icon(Icons.check_circle_outline, size: 80, color: Colors.green.shade600),
+            Icon(Icons.check_circle_outline,
+                size: 80, color: Colors.green.shade600),
             const SizedBox(height: 16),
             const Text(
               'Session Finished!',
@@ -331,11 +336,14 @@ class _StudyScreenState extends State<StudyScreen> {
                   children: [
                     _buildStatRow('Questions Mastered', '${stats.mastered}'),
                     const Divider(),
-                    _buildStatRow('Due Reviews Completed', '${stats.dueReviewsCompleted}'),
+                    _buildStatRow('Due Reviews Completed',
+                        '${stats.dueReviewsCompleted}'),
                     const Divider(),
-                    _buildStatRow('Correct Answers', '${stats.answeredCorrect}'),
+                    _buildStatRow(
+                        'Correct Answers', '${stats.answeredCorrect}'),
                     const Divider(),
-                    _buildStatRow('Incorrect Answers', '${stats.answeredIncorrect}'),
+                    _buildStatRow(
+                        'Incorrect Answers', '${stats.answeredIncorrect}'),
                     const Divider(),
                     _buildStatRow('Skipped Questions', '${stats.skipped}'),
                   ],
@@ -350,7 +358,8 @@ class _StudyScreenState extends State<StudyScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(context),
-              child: const Text('Back to Performance', style: TextStyle(fontSize: 18)),
+              child: const Text('Back to Performance',
+                  style: TextStyle(fontSize: 18)),
             ),
           ],
         ),
@@ -365,7 +374,9 @@ class _StudyScreenState extends State<StudyScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontSize: 16)),
-          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -400,7 +411,8 @@ class _StudyScreenState extends State<StudyScreen> {
               padding: const EdgeInsets.only(right: 16.0),
               child: Text(
                 '${_studyQueue!.remainingCount} remaining',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
           )
@@ -419,19 +431,23 @@ class _StudyScreenState extends State<StudyScreen> {
                   label: Text(q.category, style: const TextStyle(fontSize: 12)),
                 ),
                 Chip(
-                  avatar: const Icon(Icons.bolt, size: 16, color: Colors.orange),
-                  label: Text('Streak: $streak/${_metricsManager.studyMasteryThreshold}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  avatar:
+                      const Icon(Icons.bolt, size: 16, color: Colors.orange),
+                  label: Text(
+                      'Streak: $streak/${_metricsManager.studyMasteryThreshold}',
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-
             Text(
-              q.question.trim().isEmpty ? "What does this sign/image indicate?" : q.question,
+              q.question.trim().isEmpty
+                  ? "What does this sign/image indicate?"
+                  : q.question,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 16),
-
             if (q.imagePath != null && q.imagePath!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
@@ -441,12 +457,12 @@ class _StudyScreenState extends State<StudyScreen> {
                     q.imagePath!,
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
-                      return const Text("Immagine non trovata", style: TextStyle(color: Colors.red));
+                      return const Text("Immagine non trovata",
+                          style: TextStyle(color: Colors.red));
                     },
                   ),
                 ),
               ),
-
             if (q.videoUrl != null && q.videoUrl!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
@@ -474,20 +490,17 @@ class _StudyScreenState extends State<StudyScreen> {
                         ],
                       ),
               ),
-
-            ...List.generate(q.options.length, (index) => _buildOptionButton(q, index)),
-
+            ...List.generate(
+                q.options.length, (index) => _buildOptionButton(q, index)),
             _buildFeedbackBanner(),
-
             const SizedBox(height: 16),
-
             if (!_hasAnswered)
               TextButton.icon(
                 icon: const Icon(Icons.skip_next, color: Colors.grey),
-                label: const Text("Skip for this session", style: TextStyle(fontSize: 16, color: Colors.grey)),
+                label: const Text("Skip for this session",
+                    style: TextStyle(fontSize: 16, color: Colors.grey)),
                 onPressed: _isRecordingAnswer ? null : _onSkipPressed,
               ),
-
             if (_hasAnswered && _pendingResult != null)
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(

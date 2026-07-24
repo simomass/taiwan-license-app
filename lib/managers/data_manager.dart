@@ -14,7 +14,8 @@ class DataManager {
   Future<void> loadQuestions() async {
     if (isLoaded) return;
     try {
-      final String response = await rootBundle.loadString('assets/questions.json');
+      final String response =
+          await rootBundle.loadString('assets/questions.json');
       final List<dynamic> data = json.decode(response);
       allQuestions = data.map((q) => Question.fromJson(q)).toList();
       isLoaded = true;

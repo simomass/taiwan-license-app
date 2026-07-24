@@ -23,9 +23,10 @@ class Question {
     // Read the correct index and options
     int correctIndex = json['correct_index'];
     List<String> options = List<String>.from(json['options']);
-    
+
     // We can shuffle the options to provide more variety, but we must track the correct option
-    if (options.length > 1 && (json['source'] != 'pdf_3.pdf' && json['source'] != 'pdf_5.pdf')) {
+    if (options.length > 1 &&
+        (json['source'] != 'pdf_3.pdf' && json['source'] != 'pdf_5.pdf')) {
       // Don't shuffle True/False questions (pdf_3 and pdf_5) to keep O/X consistent
       String correctText = options[correctIndex];
       options.shuffle();

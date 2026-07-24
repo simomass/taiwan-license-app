@@ -58,9 +58,11 @@ class MetricsManager {
     }
   }
 
-  Future<void> _saveMetricsMap(Map<String, Map<String, dynamic>> metricsToSave) async {
+  Future<void> _saveMetricsMap(
+      Map<String, Map<String, dynamic>> metricsToSave) async {
     final prefs = await SharedPreferences.getInstance();
-    final success = await prefs.setString(_metricsKey, json.encode(metricsToSave));
+    final success =
+        await prefs.setString(_metricsKey, json.encode(metricsToSave));
     if (!success) {
       throw StateError('Failed to save metrics to SharedPreferences');
     }
@@ -106,13 +108,17 @@ class MetricsManager {
 
   // Returns question IDs sorted by number of incorrect answers (descending)
   List<String> getMostFailedQuestions() {
-    final List<MapEntry<String, Map<String, dynamic>>> entries = _metrics.entries.toList();
+    final List<MapEntry<String, Map<String, dynamic>>> entries =
+        _metrics.entries.toList();
     entries.sort((a, b) {
       final aIncorrect = (a.value['incorrect'] as int?) ?? 0;
       final bIncorrect = (b.value['incorrect'] as int?) ?? 0;
       return bIncorrect.compareTo(aIncorrect); // Descending
     });
-    return entries.where((e) => ((e.value['incorrect'] as int?) ?? 0) > 0).map((e) => e.key).toList();
+    return entries
+        .where((e) => ((e.value['incorrect'] as int?) ?? 0) > 0)
+        .map((e) => e.key)
+        .toList();
   }
 
   // Study Modality Extensions
@@ -166,17 +172,21 @@ class MetricsManager {
     final now = (answeredAt ?? DateTime.now()).toUtc();
 
     // Deep copy current metrics map for transactional persistence
-    final snapshot = _metrics.map((k, v) => MapEntry(k, Map<String, dynamic>.from(v)));
+    final snapshot =
+        _metrics.map((k, v) => MapEntry(k, Map<String, dynamic>.from(v)));
     final originalMetrics = Map<String, dynamic>.from(
-      snapshot[questionId] ?? <String, dynamic>{
-        'correct': 0,
-        'incorrect': 0,
-      },
+      snapshot[questionId] ??
+          <String, dynamic>{
+            'correct': 0,
+            'incorrect': 0,
+          },
     );
     final updatedMetrics = Map<String, dynamic>.from(originalMetrics);
 
-    final previousStreak = (originalMetrics['study_consecutive_correct'] as int?) ?? 0;
-    final nextReviewDateParsed = _parseMetricDate(originalMetrics['study_next_review_at']);
+    final previousStreak =
+        (originalMetrics['study_consecutive_correct'] as int?) ?? 0;
+    final nextReviewDateParsed =
+        _parseMetricDate(originalMetrics['study_next_review_at']);
     final wasDueReview = previousStreak >= studyMasteryThreshold &&
         (nextReviewDateParsed == null || !nextReviewDateParsed.isAfter(now));
 
@@ -184,12 +194,14 @@ class MetricsManager {
     DateTime? nextReviewAt;
 
     if (isCorrect) {
-      updatedMetrics['correct'] = ((originalMetrics['correct'] as int?) ?? 0) + 1;
+      updatedMetrics['correct'] =
+          ((originalMetrics['correct'] as int?) ?? 0) + 1;
       updatedMetrics['study_last_reviewed_at'] = now.toIso8601String();
 
       if (wasDueReview) {
         updatedMetrics['study_consecutive_correct'] = studyMasteryThreshold;
-        final currentInterval = (originalMetrics['study_review_interval_days'] as int?) ?? 0;
+        final currentInterval =
+            (originalMetrics['study_review_interval_days'] as int?) ?? 0;
         final nextInterval = _calculateNextReviewInterval(currentInterval);
         updatedMetrics['study_review_interval_days'] = nextInterval;
         nextReviewAt = now.add(Duration(days: nextInterval));
@@ -204,11 +216,13 @@ class MetricsManager {
           updatedMetrics['study_mastered_at'] = now.toIso8601String();
           updatedMetrics['study_review_interval_days'] = firstInterval;
           nextReviewAt = now.add(const Duration(days: firstInterval));
-          updatedMetrics['study_next_review_at'] = nextReviewAt.toIso8601String();
+          updatedMetrics['study_next_review_at'] =
+              nextReviewAt.toIso8601String();
         }
       }
     } else {
-      updatedMetrics['incorrect'] = ((originalMetrics['incorrect'] as int?) ?? 0) + 1;
+      updatedMetrics['incorrect'] =
+          ((originalMetrics['incorrect'] as int?) ?? 0) + 1;
       updatedMetrics['study_consecutive_correct'] = 0;
       updatedMetrics['study_last_reviewed_at'] = now.toIso8601String();
       updatedMetrics['study_mastered_at'] = null;
@@ -227,7 +241,8 @@ class MetricsManager {
     return StudyAnswerResult(
       questionId: questionId,
       isCorrect: isCorrect,
-      studyConsecutiveCorrect: (updatedMetrics['study_consecutive_correct'] as int?) ?? 0,
+      studyConsecutiveCorrect:
+          (updatedMetrics['study_consecutive_correct'] as int?) ?? 0,
       masteredNow: masteredNow,
       wasDueReview: wasDueReview,
       nextReviewAt: nextReviewAt,
@@ -239,4 +254,3 @@ class MetricsManager {
     await _saveMetrics();
   }
 }
-

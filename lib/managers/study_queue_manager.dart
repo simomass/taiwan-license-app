@@ -56,7 +56,8 @@ class StudyQueue {
     stats.skipped++;
   }
 
-  void _reinsert(Question question, {required int minGap, required int maxGap}) {
+  void _reinsert(Question question,
+      {required int minGap, required int maxGap}) {
     final len = _deck.length;
     if (len <= 0) {
       _deck.add(question);

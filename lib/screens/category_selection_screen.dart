@@ -18,7 +18,7 @@ class CategorySelectionScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final category = categories[index];
           final count = DataManager().getQuestionsByCategory(category).length;
-          
+
           return ListTile(
             title: Text(category),
             subtitle: Text('$count questions'),
