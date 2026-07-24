@@ -18,9 +18,9 @@ class MetricsScreen extends StatefulWidget {
 
 class _MetricsScreenState extends State<MetricsScreen> {
   void _openStudySession() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const StudyScreen()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const StudyScreen()));
     if (mounted) {
       setState(() {});
     }
@@ -49,7 +49,7 @@ class _MetricsScreenState extends State<MetricsScreen> {
                 Navigator.pop(context); // Go back after clearing
               }
             },
-          )
+          ),
         ],
       ),
       body: failedIds.isEmpty
@@ -74,7 +74,9 @@ class _MetricsScreenState extends State<MetricsScreen> {
                     children: [
                       ListTile(
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16.0, vertical: 8.0),
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
                         leading: CircleAvatar(
                           backgroundColor: Colors.blueAccent,
                           child: const Icon(Icons.school, color: Colors.white),
@@ -82,7 +84,9 @@ class _MetricsScreenState extends State<MetricsScreen> {
                         title: const Text(
                           'Start Study Session',
                           style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 18),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                         ),
                         subtitle: Text(
                           studyIds.isNotEmpty
@@ -101,16 +105,18 @@ class _MetricsScreenState extends State<MetricsScreen> {
                                 : Colors.grey,
                             foregroundColor: Colors.white,
                           ),
-                          onPressed:
-                              studyIds.isNotEmpty ? _openStudySession : null,
+                          onPressed: studyIds.isNotEmpty
+                              ? _openStudySession
+                              : null,
                           icon: const Icon(Icons.play_arrow),
                           label: const Text('Study'),
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0, vertical: 8.0)
-                            .copyWith(top: 0),
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ).copyWith(top: 0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -124,11 +130,14 @@ class _MetricsScreenState extends State<MetricsScreen> {
                               isDense: true,
                               underline: const SizedBox(),
                               items: [1, 2, 3, 4, 5]
-                                  .map((e) => DropdownMenuItem(
-                                        value: e,
-                                        child: Text(
-                                            '$e correct answer${e > 1 ? 's' : ''}'),
-                                      ))
+                                  .map(
+                                    (e) => DropdownMenuItem(
+                                      value: e,
+                                      child: Text(
+                                        '$e correct answer${e > 1 ? 's' : ''}',
+                                      ),
+                                    ),
+                                  )
                                   .toList(),
                               onChanged: (val) async {
                                 if (val != null) {
@@ -145,16 +154,19 @@ class _MetricsScreenState extends State<MetricsScreen> {
                   ),
                 ),
                 const Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 4.0,
+                  ),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Missed Questions Breakdown',
                       style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ),
@@ -163,24 +175,27 @@ class _MetricsScreenState extends State<MetricsScreen> {
                     itemCount: failedIds.length,
                     itemBuilder: (context, index) {
                       final id = failedIds[index];
-                      final Question? q =
-                          allQuestions.where((q) => q.id == id).firstOrNull;
+                      final Question? q = allQuestions
+                          .where((q) => q.id == id)
+                          .firstOrNull;
 
                       if (q == null) return const SizedBox.shrink();
 
-                      final incorrectCount =
-                          widget.metricsManager.getIncorrectCount(id);
-                      final correctCount =
-                          widget.metricsManager.getCorrectCount(id);
-                      final streak =
-                          widget.metricsManager.getStudyConsecutiveCorrect(id);
+                      final incorrectCount = widget.metricsManager
+                          .getIncorrectCount(id);
+                      final correctCount = widget.metricsManager
+                          .getCorrectCount(id);
+                      final streak = widget.metricsManager
+                          .getStudyConsecutiveCorrect(id);
                       final total = incorrectCount + correctCount;
-                      final rate =
-                          (incorrectCount / total * 100).toStringAsFixed(1);
+                      final rate = (incorrectCount / total * 100)
+                          .toStringAsFixed(1);
 
                       return Card(
                         margin: const EdgeInsets.symmetric(
-                            horizontal: 16.0, vertical: 6.0),
+                          horizontal: 16.0,
+                          vertical: 6.0,
+                        ),
                         child: ListTile(
                           title: Text(
                             q.question.trim().isEmpty
@@ -190,7 +205,8 @@ class _MetricsScreenState extends State<MetricsScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           subtitle: Text(
-                              'Incorrect: $incorrectCount / Total: $total ($rate% fail rate) • Study streak: $streak/${widget.metricsManager.studyMasteryThreshold}'),
+                            'Incorrect: $incorrectCount / Total: $total ($rate% fail rate) • Study streak: $streak/${widget.metricsManager.studyMasteryThreshold}',
+                          ),
                           trailing: const Icon(Icons.arrow_forward_ios),
                           onTap: () {
                             _showQuestionDetails(context, q);
@@ -217,10 +233,11 @@ class _MetricsScreenState extends State<MetricsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                    q.question.trim().isEmpty
-                        ? "What does this sign/image indicate?"
-                        : q.question,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                  q.question.trim().isEmpty
+                      ? "What does this sign/image indicate?"
+                      : q.question,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 16),
                 if (q.imagePath != null && q.imagePath!.isNotEmpty)
                   Image.asset(q.imagePath!, height: 100),
@@ -234,8 +251,9 @@ class _MetricsScreenState extends State<MetricsScreen> {
                       '${i + 1}. ${q.options[i]}',
                       style: TextStyle(
                         color: isCorrect ? Colors.green : Colors.black,
-                        fontWeight:
-                            isCorrect ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isCorrect
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   );
@@ -259,9 +277,9 @@ class _MetricsScreenState extends State<MetricsScreen> {
     final allQuestions = DataManager().allQuestions;
 
     if (failedIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No data to export.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No data to export.')));
       return;
     }
 
@@ -269,7 +287,8 @@ class _MetricsScreenState extends State<MetricsScreen> {
     // UTF-8 BOM for Excel
     buffer.write('\uFEFF');
     buffer.writeln(
-        'Question ID,Category,Question Text,Correct Attempts,Incorrect Attempts,Fail Rate (%)');
+      'Question ID,Category,Question Text,Correct Attempts,Incorrect Attempts,Fail Rate (%)',
+    );
 
     for (var id in failedIds) {
       final q = allQuestions.where((q) => q.id == id).firstOrNull;
@@ -288,7 +307,8 @@ class _MetricsScreenState extends State<MetricsScreen> {
       final escapedCategory = '"${q.category.replaceAll('"', '""')}"';
 
       buffer.writeln(
-          '${q.id},$escapedCategory,$escapedText,$correctCount,$incorrectCount,$rate');
+        '${q.id},$escapedCategory,$escapedText,$correctCount,$incorrectCount,$rate',
+      );
     }
 
     try {
@@ -298,16 +318,13 @@ class _MetricsScreenState extends State<MetricsScreen> {
 
       final xFile = XFile(file.path);
       await SharePlus.instance.share(
-        ShareParams(
-          text: 'My Driving License Test Stats',
-          files: [xFile],
-        ),
+        ShareParams(text: 'My Driving License Test Stats', files: [xFile]),
       );
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error exporting CSV: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error exporting CSV: $e')));
       }
     }
   }

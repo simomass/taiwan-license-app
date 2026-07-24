@@ -51,8 +51,10 @@ class SimulationResultScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             if (wrongAnswers.isEmpty)
-              const Text('Perfect score! No failed questions.',
-                  style: TextStyle(fontSize: 16)),
+              const Text(
+                'Perfect score! No failed questions.',
+                style: TextStyle(fontSize: 16),
+              ),
             ...wrongAnswers.map((w) {
               final Question q = w['question'];
               final int selected = w['selected'];
@@ -64,14 +66,19 @@ class SimulationResultScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(q.question,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        q.question,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 8),
                       Text(
-                          'Your answer: ${selected >= 0 ? q.options[selected] : "Not answered"}',
-                          style: const TextStyle(color: Colors.red)),
-                      Text('Correct answer: ${q.options[q.correctIndex]}',
-                          style: const TextStyle(color: Colors.green)),
+                        'Your answer: ${selected >= 0 ? q.options[selected] : "Not answered"}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                      Text(
+                        'Correct answer: ${q.options[q.correctIndex]}',
+                        style: const TextStyle(color: Colors.green),
+                      ),
                     ],
                   ),
                 ),

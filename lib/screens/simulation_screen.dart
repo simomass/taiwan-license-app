@@ -59,15 +59,18 @@ class _SimulationScreenState extends State<SimulationScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('sim_active', true);
 
-      final questionsJson =
-          _simulationQuestions.map((q) => q.toJson()).toList();
+      final questionsJson = _simulationQuestions
+          .map((q) => q.toJson())
+          .toList();
       await prefs.setString('sim_questions', jsonEncode(questionsJson));
 
       final answersJson = _userAnswers.map((k, v) => MapEntry(k.toString(), v));
       await prefs.setString('sim_answers', jsonEncode(answersJson));
 
       await prefs.setString(
-          'sim_skipped', jsonEncode(_skippedQuestions.toList()));
+        'sim_skipped',
+        jsonEncode(_skippedQuestions.toList()),
+      );
       await prefs.setInt('sim_current_index', _currentIndex);
       await prefs.setInt('sim_seconds_remaining', _secondsRemaining);
     } catch (e) {
@@ -103,14 +106,16 @@ class _SimulationScreenState extends State<SimulationScreen> {
 
         if (questionsStr != null) {
           final List<dynamic> questionsList = jsonDecode(questionsStr);
-          final questions =
-              questionsList.map((q) => Question.fromSavedJson(q)).toList();
+          final questions = questionsList
+              .map((q) => Question.fromSavedJson(q))
+              .toList();
 
           Map<int, int> answers = {};
           if (answersStr != null) {
             final Map<String, dynamic> answersMap = jsonDecode(answersStr);
-            answers =
-                answersMap.map((k, v) => MapEntry(int.parse(k), v as int));
+            answers = answersMap.map(
+              (k, v) => MapEntry(int.parse(k), v as int),
+            );
           }
 
           Set<int> skipped = {};
@@ -265,10 +270,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
       if (isCorrect) {
         correctCount++;
       } else {
-        wrongAnswers.add({
-          'question': q,
-          'selected': userAnswer,
-        });
+        wrongAnswers.add({'question': q, 'selected': userAnswer});
       }
     }
 
@@ -278,10 +280,8 @@ class _SimulationScreenState extends State<SimulationScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => SimulationResultScreen(
-          score: score,
-          wrongAnswers: wrongAnswers,
-        ),
+        builder: (context) =>
+            SimulationResultScreen(score: score, wrongAnswers: wrongAnswers),
       ),
     );
   }
@@ -299,7 +299,8 @@ class _SimulationScreenState extends State<SimulationScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Abandon Simulation?'),
         content: const Text(
-            'Do you want to abandon the simulation? Your progress will be lost.'),
+          'Do you want to abandon the simulation? Your progress will be lost.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -318,252 +319,267 @@ class _SimulationScreenState extends State<SimulationScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isGenerating) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final q = _simulationQuestions[_currentIndex];
 
     return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) async {
-          if (didPop) return;
-          final navigator = Navigator.of(context);
-          final abandon = await _showAbandonDialog();
-          if (abandon == true && mounted) {
-            await _clearSimulationState();
-            navigator.pop();
-          }
-        },
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text('Simulation ($_timeString)'),
-            actions: [
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: Text(
-                    '${_currentIndex + 1}/50',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              )
-            ],
-          ),
-          body: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        q.question.trim().isEmpty
-                            ? "What does this sign/image indicate?"
-                            : q.question,
-                        style: const TextStyle(fontSize: 20),
-                      ),
-                      const SizedBox(height: 16),
-                      if (q.imagePath != null && q.imagePath!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxHeight: 250),
-                            child: Image.asset(
-                              q.imagePath!,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Text("Immagine non trovata",
-                                    style: TextStyle(color: Colors.red));
-                              },
-                            ),
-                          ),
-                        ),
-                      if (q.videoUrl != null && q.videoUrl!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: _isWebViewSupported &&
-                                  _webViewController != null
-                              ? Container(
-                                  height: 250,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                  ),
-                                  child: WebViewWidget(
-                                      controller: _webViewController!),
-                                )
-                              : Column(
-                                  children: [
-                                    const Text(
-                                      "L'embedded player non è supportato su questa piattaforma.",
-                                      style: TextStyle(color: Colors.grey),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    ElevatedButton.icon(
-                                      icon: const Icon(Icons.open_in_browser),
-                                      label:
-                                          const Text("Apri Video nel Browser"),
-                                      onPressed: () =>
-                                          _launchExternalVideo(q.videoUrl!),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ...List.generate(q.options.length, (index) {
-                        final isSelected = _userAnswers[_currentIndex] == index;
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  isSelected ? Colors.blue.shade200 : null,
-                            ),
-                            onPressed: () => _answerQuestion(index),
-                            child: Text(
-                              q.options[index],
-                              style: TextStyle(
-                                  color: isSelected ? Colors.black : null),
-                            ),
-                          ),
-                        );
-                      }),
-                      const SizedBox(height: 30),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          ElevatedButton(
-                            onPressed:
-                                _currentIndex > 0 ? _previousQuestion : null,
-                            child: const Text('Previous'),
-                          ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueAccent,
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: _nextQuestion,
-                            child: Text(_currentIndex == 49
-                                ? 'Finish Test'
-                                : 'Next / Skip'),
-                          ),
-                        ],
-                      )
-                    ],
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final navigator = Navigator.of(context);
+        final abandon = await _showAbandonDialog();
+        if (abandon == true && mounted) {
+          await _clearSimulationState();
+          navigator.pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Simulation ($_timeString)'),
+          actions: [
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: Text(
+                  '${_currentIndex + 1}/50',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-
-              // The 50-box grid
-              Container(
-                padding: const EdgeInsets.all(12.0),
-                color: Colors.grey.shade200,
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Text(
+                      q.question.trim().isEmpty
+                          ? "What does this sign/image indicate?"
+                          : q.question,
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                    const SizedBox(height: 16),
+                    if (q.imagePath != null && q.imagePath!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 250),
+                          child: Image.asset(
+                            q.imagePath!,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Text(
+                                "Immagine non trovata",
+                                style: TextStyle(color: Colors.red),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    if (q.videoUrl != null && q.videoUrl!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: _isWebViewSupported && _webViewController != null
+                            ? Container(
+                                height: 250,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                ),
+                                child: WebViewWidget(
+                                  controller: _webViewController!,
+                                ),
+                              )
+                            : Column(
+                                children: [
+                                  const Text(
+                                    "L'embedded player non è supportato su questa piattaforma.",
+                                    style: TextStyle(color: Colors.grey),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ElevatedButton.icon(
+                                    icon: const Icon(Icons.open_in_browser),
+                                    label: const Text("Apri Video nel Browser"),
+                                    onPressed: () =>
+                                        _launchExternalVideo(q.videoUrl!),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ...List.generate(q.options.length, (index) {
+                      final isSelected = _userAnswers[_currentIndex] == index;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isSelected
+                                ? Colors.blue.shade200
+                                : null,
+                          ),
+                          onPressed: () => _answerQuestion(index),
+                          child: Text(
+                            q.options[index],
+                            style: TextStyle(
+                              color: isSelected ? Colors.black : null,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 30),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            const Text(
-                              'Overview',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                _isOverviewExpanded
-                                    ? Icons.keyboard_double_arrow_down
-                                    : Icons.keyboard_double_arrow_up,
-                              ),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () {
-                                setState(() {
-                                  _isOverviewExpanded = !_isOverviewExpanded;
-                                });
-                              },
-                            ),
-                          ],
+                        ElevatedButton(
+                          onPressed: _currentIndex > 0
+                              ? _previousQuestion
+                              : null,
+                          child: const Text('Previous'),
                         ),
-                        Text(
-                          '${_userAnswers.length} / 50 answered',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: _nextQuestion,
+                          child: Text(
+                            _currentIndex == 49 ? 'Finish Test' : 'Next / Skip',
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    if (_isOverviewExpanded)
-                      Center(
-                        child: Wrap(
-                          spacing: 6.0,
-                          runSpacing: 6.0,
-                          alignment: WrapAlignment.center,
-                          children: List.generate(50, (index) {
-                            final isAnswered = _userAnswers.containsKey(index);
-                            final isSkipped = _skippedQuestions.contains(index);
-                            final isCurrent = index == _currentIndex;
+                  ],
+                ),
+              ),
+            ),
 
-                            Color boxColor = Colors.red.shade400; // Unanswered
-                            if (isAnswered) {
-                              boxColor = Colors.yellow.shade600;
-                            } else if (isSkipped) {
-                              boxColor = Colors.grey.shade400;
-                            }
+            // The 50-box grid
+            Container(
+              padding: const EdgeInsets.all(12.0),
+              color: Colors.grey.shade200,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Overview',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              _isOverviewExpanded
+                                  ? Icons.keyboard_double_arrow_down
+                                  : Icons.keyboard_double_arrow_up,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              setState(() {
+                                _isOverviewExpanded = !_isOverviewExpanded;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '${_userAnswers.length} / 50 answered',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_isOverviewExpanded)
+                    Center(
+                      child: Wrap(
+                        spacing: 6.0,
+                        runSpacing: 6.0,
+                        alignment: WrapAlignment.center,
+                        children: List.generate(50, (index) {
+                          final isAnswered = _userAnswers.containsKey(index);
+                          final isSkipped = _skippedQuestions.contains(index);
+                          final isCurrent = index == _currentIndex;
 
-                            return GestureDetector(
-                              onTap: () => _goToQuestion(index),
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: boxColor,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: isCurrent
-                                      ? Border.all(
-                                          color: Colors.black, width: 2.5)
-                                      : Border.all(
-                                          color: Colors.black12, width: 1),
-                                  boxShadow: isCurrent
-                                      ? [
-                                          BoxShadow(
-                                              color: Colors.black
-                                                  .withValues(alpha: 0.2),
-                                              blurRadius: 4,
-                                              offset: const Offset(0, 2))
-                                        ]
-                                      : null,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '${index + 1}',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: (isAnswered || isSkipped)
-                                          ? Colors.black87
-                                          : Colors.white,
-                                      fontWeight: isCurrent
-                                          ? FontWeight.bold
-                                          : FontWeight.w500,
-                                    ),
+                          Color boxColor = Colors.red.shade400; // Unanswered
+                          if (isAnswered) {
+                            boxColor = Colors.yellow.shade600;
+                          } else if (isSkipped) {
+                            boxColor = Colors.grey.shade400;
+                          }
+
+                          return GestureDetector(
+                            onTap: () => _goToQuestion(index),
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: boxColor,
+                                borderRadius: BorderRadius.circular(4),
+                                border: isCurrent
+                                    ? Border.all(
+                                        color: Colors.black,
+                                        width: 2.5,
+                                      )
+                                    : Border.all(
+                                        color: Colors.black12,
+                                        width: 1,
+                                      ),
+                                boxShadow: isCurrent
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${index + 1}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: (isAnswered || isSkipped)
+                                        ? Colors.black87
+                                        : Colors.white,
+                                    fontWeight: isCurrent
+                                        ? FontWeight.bold
+                                        : FontWeight.w500,
                                   ),
                                 ),
                               ),
-                            );
-                          }),
-                        ),
+                            ),
+                          );
+                        }),
                       ),
-                  ],
-                ),
-              )
-            ],
-          ),
-        ));
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

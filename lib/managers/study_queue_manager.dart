@@ -18,8 +18,8 @@ class StudyQueue {
   final StudySessionStats stats = StudySessionStats();
 
   StudyQueue(List<Question> initialQuestions, {Random? random})
-      : _deck = List.from(initialQuestions),
-        _random = random ?? Random() {
+    : _deck = List.from(initialQuestions),
+      _random = random ?? Random() {
     _deck.shuffle(_random);
   }
 
@@ -56,8 +56,11 @@ class StudyQueue {
     stats.skipped++;
   }
 
-  void _reinsert(Question question,
-      {required int minGap, required int maxGap}) {
+  void _reinsert(
+    Question question, {
+    required int minGap,
+    required int maxGap,
+  }) {
     final len = _deck.length;
     if (len <= 0) {
       _deck.add(question);

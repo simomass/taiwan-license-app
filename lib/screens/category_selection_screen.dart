@@ -10,9 +10,7 @@ class CategorySelectionScreen extends StatelessWidget {
     final categories = DataManager().getAllCategories();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select Category'),
-      ),
+      appBar: AppBar(title: const Text('Select Category')),
       body: ListView.builder(
         itemCount: categories.length,
         itemBuilder: (context, index) {

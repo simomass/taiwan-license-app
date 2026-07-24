@@ -47,10 +47,7 @@ class MetricsManager {
       try {
         final decoded = json.decode(data) as Map<String, dynamic>;
         _metrics = decoded.map((key, value) {
-          return MapEntry(
-            key,
-            Map<String, dynamic>.from(value as Map),
-          );
+          return MapEntry(key, Map<String, dynamic>.from(value as Map));
         });
       } catch (e) {
         // If there's an error parsing, we just keep the empty map
@@ -59,10 +56,13 @@ class MetricsManager {
   }
 
   Future<void> _saveMetricsMap(
-      Map<String, Map<String, dynamic>> metricsToSave) async {
+    Map<String, Map<String, dynamic>> metricsToSave,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
-    final success =
-        await prefs.setString(_metricsKey, json.encode(metricsToSave));
+    final success = await prefs.setString(
+      _metricsKey,
+      json.encode(metricsToSave),
+    );
     if (!success) {
       throw StateError('Failed to save metrics to SharedPreferences');
     }
@@ -108,8 +108,9 @@ class MetricsManager {
 
   // Returns question IDs sorted by number of incorrect answers (descending)
   List<String> getMostFailedQuestions() {
-    final List<MapEntry<String, Map<String, dynamic>>> entries =
-        _metrics.entries.toList();
+    final List<MapEntry<String, Map<String, dynamic>>> entries = _metrics
+        .entries
+        .toList();
     entries.sort((a, b) {
       final aIncorrect = (a.value['incorrect'] as int?) ?? 0;
       final bIncorrect = (b.value['incorrect'] as int?) ?? 0;
@@ -172,22 +173,21 @@ class MetricsManager {
     final now = (answeredAt ?? DateTime.now()).toUtc();
 
     // Deep copy current metrics map for transactional persistence
-    final snapshot =
-        _metrics.map((k, v) => MapEntry(k, Map<String, dynamic>.from(v)));
+    final snapshot = _metrics.map(
+      (k, v) => MapEntry(k, Map<String, dynamic>.from(v)),
+    );
     final originalMetrics = Map<String, dynamic>.from(
-      snapshot[questionId] ??
-          <String, dynamic>{
-            'correct': 0,
-            'incorrect': 0,
-          },
+      snapshot[questionId] ?? <String, dynamic>{'correct': 0, 'incorrect': 0},
     );
     final updatedMetrics = Map<String, dynamic>.from(originalMetrics);
 
     final previousStreak =
         (originalMetrics['study_consecutive_correct'] as int?) ?? 0;
-    final nextReviewDateParsed =
-        _parseMetricDate(originalMetrics['study_next_review_at']);
-    final wasDueReview = previousStreak >= studyMasteryThreshold &&
+    final nextReviewDateParsed = _parseMetricDate(
+      originalMetrics['study_next_review_at'],
+    );
+    final wasDueReview =
+        previousStreak >= studyMasteryThreshold &&
         (nextReviewDateParsed == null || !nextReviewDateParsed.isAfter(now));
 
     bool masteredNow = false;
@@ -216,8 +216,8 @@ class MetricsManager {
           updatedMetrics['study_mastered_at'] = now.toIso8601String();
           updatedMetrics['study_review_interval_days'] = firstInterval;
           nextReviewAt = now.add(const Duration(days: firstInterval));
-          updatedMetrics['study_next_review_at'] =
-              nextReviewAt.toIso8601String();
+          updatedMetrics['study_next_review_at'] = nextReviewAt
+              .toIso8601String();
         }
       }
     } else {

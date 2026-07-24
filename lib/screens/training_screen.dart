@@ -45,8 +45,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
   Future<void> _loadData() async {
     await _metricsManager.loadMetrics();
 
-    final categoryQuestions =
-        DataManager().getQuestionsByCategory(widget.category);
+    final categoryQuestions = DataManager().getQuestionsByCategory(
+      widget.category,
+    );
     _totalQuestions = categoryQuestions.length;
 
     _pendingQuestions = List.from(categoryQuestions);
@@ -65,8 +66,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
             _webViewController != null &&
             _currentQuestion!.videoUrl != null &&
             _currentQuestion!.videoUrl!.isNotEmpty) {
-          _webViewController!
-              .loadRequest(Uri.parse(_currentQuestion!.videoUrl!));
+          _webViewController!.loadRequest(
+            Uri.parse(_currentQuestion!.videoUrl!),
+          );
         }
       } else {
         _currentQuestion = null;
@@ -118,9 +120,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.category),
-      ),
+      appBar: AppBar(title: Text(widget.category)),
       body: _currentQuestion == null
           ? const Center(
               child: Text(
@@ -137,7 +137,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   Text(
                     "Risolte in questa sessione: $_solvedCount / $_totalQuestions",
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
@@ -158,8 +160,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
                           _currentQuestion!.imagePath!,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
-                            return const Text("Immagine non trovata",
-                                style: TextStyle(color: Colors.red));
+                            return const Text(
+                              "Immagine non trovata",
+                              style: TextStyle(color: Colors.red),
+                            );
                           },
                         ),
                       ),
@@ -175,7 +179,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
                                 border: Border.all(color: Colors.grey),
                               ),
                               child: WebViewWidget(
-                                  controller: _webViewController!),
+                                controller: _webViewController!,
+                              ),
                             )
                           : Column(
                               children: [
@@ -189,7 +194,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
                                   icon: const Icon(Icons.open_in_browser),
                                   label: const Text("Apri Video nel Browser"),
                                   onPressed: () => _launchExternalVideo(
-                                      _currentQuestion!.videoUrl!),
+                                    _currentQuestion!.videoUrl!,
+                                  ),
                                 ),
                               ],
                             ),
@@ -207,8 +213,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   if (!_answered)
                     TextButton(
                       onPressed: _skipQuestion,
-                      child: const Text("Skip Question",
-                          style: TextStyle(fontSize: 18, color: Colors.grey)),
+                      child: const Text(
+                        "Skip Question",
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
                     ),
                   if (_answered) ...[
                     Text(
@@ -238,10 +246,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
                         }
                         _nextQuestion();
                       },
-                      child: const Text("Prossima Domanda",
-                          style: TextStyle(fontSize: 18)),
+                      child: const Text(
+                        "Prossima Domanda",
+                        style: TextStyle(fontSize: 18),
+                      ),
                     ),
-                  ]
+                  ],
                 ],
               ),
             ),
