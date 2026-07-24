@@ -210,7 +210,7 @@ jobs:
 
       - name: Package Windows
         run: |
-          Rename-Item -Path build\windows\x64\runner\Release -NewName patente-moto-taiwan-windows
+          Move-Item -Path build\windows\x64\runner\Release -Destination patente-moto-taiwan-windows
           Compress-Archive -Path patente-moto-taiwan-windows -DestinationPath patente-moto-taiwan-windows.zip
 
       - name: Upload Windows artifact
