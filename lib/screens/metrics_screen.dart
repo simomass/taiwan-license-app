@@ -17,10 +17,10 @@ class MetricsScreen extends StatefulWidget {
 }
 
 class _MetricsScreenState extends State<MetricsScreen> {
-  void _openStudySession() async {
+  void _openStudySession({bool includeAllFailed = false}) async {
     await Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const StudyScreen()));
+    ).push(MaterialPageRoute(builder: (_) => StudyScreen(includeAllFailed: includeAllFailed)));
     if (mounted) {
       setState(() {});
     }
@@ -30,6 +30,7 @@ class _MetricsScreenState extends State<MetricsScreen> {
   Widget build(BuildContext context) {
     final failedIds = widget.metricsManager.getMostFailedQuestions();
     final studyIds = widget.metricsManager.getQuestionsForStudy();
+    final isEarlyReview = studyIds.isEmpty && failedIds.isNotEmpty;
     final allQuestions = DataManager().allQuestions;
 
     return Scaffold(
@@ -91,7 +92,7 @@ class _MetricsScreenState extends State<MetricsScreen> {
                         subtitle: Text(
                           studyIds.isNotEmpty
                               ? '${studyIds.length} question(s) ready for mastery & review'
-                              : 'All missed questions currently mastered & up-to-date!',
+                              : 'All ${failedIds.length} missed question(s) mastered! Ready for early review.',
                           style: TextStyle(
                             color: studyIds.isNotEmpty
                                 ? Colors.blue.shade900
@@ -100,16 +101,12 @@ class _MetricsScreenState extends State<MetricsScreen> {
                         ),
                         trailing: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: studyIds.isNotEmpty
-                                ? Colors.blueAccent
-                                : Colors.grey,
+                            backgroundColor: Colors.blueAccent,
                             foregroundColor: Colors.white,
                           ),
-                          onPressed: studyIds.isNotEmpty
-                              ? _openStudySession
-                              : null,
-                          icon: const Icon(Icons.play_arrow),
-                          label: const Text('Study'),
+                          onPressed: () => _openStudySession(includeAllFailed: isEarlyReview),
+                          icon: Icon(isEarlyReview ? Icons.refresh : Icons.play_arrow),
+                          label: Text(isEarlyReview ? 'Review Early' : 'Study'),
                         ),
                       ),
                       Padding(

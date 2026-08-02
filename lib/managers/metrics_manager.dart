@@ -133,7 +133,7 @@ class MetricsManager {
     return DateTime.tryParse(value)?.toUtc();
   }
 
-  List<String> getQuestionsForStudy({DateTime? now}) {
+  List<String> getQuestionsForStudy({DateTime? now, bool includeAllFailed = false}) {
     final currentUtc = (now ?? DateTime.now()).toUtc();
     final List<String> eligible = [];
 
@@ -143,6 +143,11 @@ class MetricsManager {
 
       final incorrect = (data['incorrect'] as int?) ?? 0;
       if (incorrect <= 0) continue;
+
+      if (includeAllFailed) {
+        eligible.add(qId);
+        continue;
+      }
 
       final studyStreak = (data['study_consecutive_correct'] as int?) ?? 0;
       if (studyStreak < studyMasteryThreshold) {

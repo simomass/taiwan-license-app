@@ -10,7 +10,9 @@ import '../managers/metrics_manager.dart';
 import '../managers/study_queue_manager.dart';
 
 class StudyScreen extends StatefulWidget {
-  const StudyScreen({super.key});
+  final bool includeAllFailed;
+
+  const StudyScreen({super.key, this.includeAllFailed = false});
 
   @override
   State<StudyScreen> createState() => _StudyScreenState();
@@ -49,12 +51,17 @@ class _StudyScreenState extends State<StudyScreen> {
   Future<void> _initStudySession() async {
     setState(() {
       _isLoading = true;
+      _selectedAnswerIndex = null;
+      _pendingResult = null;
+      _hasAnswered = false;
     });
 
     await _dataManager.loadQuestions();
     await _metricsManager.loadMetrics();
 
-    final eligibleIds = _metricsManager.getQuestionsForStudy();
+    final eligibleIds = _metricsManager.getQuestionsForStudy(
+      includeAllFailed: widget.includeAllFailed,
+    );
     final eligibleSet = eligibleIds.toSet();
 
     final studyQuestions = _dataManager.allQuestions
@@ -305,6 +312,10 @@ class _StudyScreenState extends State<StudyScreen> {
 
   Widget _buildFinishedView() {
     final stats = _studyQueue!.stats;
+    final totalAnswers = stats.totalAnswers;
+    final accuracyPct = totalAnswers > 0
+        ? (stats.answeredCorrect / totalAnswers * 100).toStringAsFixed(0)
+        : '100';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Study Session Complete')),
@@ -325,9 +336,13 @@ class _StudyScreenState extends State<StudyScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Your progress has been saved.',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+            Text(
+              'Accuracy: $accuracyPct%',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade800,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -344,27 +359,41 @@ class _StudyScreenState extends State<StudyScreen> {
                       '${stats.dueReviewsCompleted}',
                     ),
                     const Divider(),
+                    _buildStatRow('Total Attempts', '$totalAnswers'),
+                    const Divider(),
                     _buildStatRow(
-                      'Correct Answers',
+                      'Correct Attempts',
                       '${stats.answeredCorrect}',
                     ),
                     const Divider(),
                     _buildStatRow(
-                      'Incorrect Answers',
+                      'Incorrect (Reinserted)',
                       '${stats.answeredIncorrect}',
                     ),
                     const Divider(),
-                    _buildStatRow('Skipped Questions', '${stats.skipped}'),
+                    _buildStatRow('Skipped', '${stats.skipped}'),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
+            ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.all(16),
                 backgroundColor: Colors.blueAccent,
                 foregroundColor: Colors.white,
+              ),
+              onPressed: () => _initStudySession(),
+              icon: const Icon(Icons.refresh),
+              label: const Text(
+                'Study Again',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.all(16),
               ),
               onPressed: () => Navigator.pop(context),
               child: const Text(
